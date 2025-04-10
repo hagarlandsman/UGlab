@@ -9,8 +9,8 @@ def jprint(obj):
     print (text)
 def get_alt(lat0, lon0, lat1,lon1,Nsteps):
     try:
-       # response = requests.get("https://maps.googleapis.com/maps/api/elevation/json?locations="+str(lat)+"%2C"+str(long)+"&key=AIzaSyCtMSbCJeALFxBPlCNvB4Ruk_oVq0eBjKM")
-        response = requests.get("https://maps.googleapis.com/maps/api/elevation/json?path="+str(lat0)+"%2C"+str(lon0)+"|"+str(lat1)+"%2C"+str(lon1)+"&samples="+str(Nsteps)+"&key=AIzaSyCtMSbCJeALFxBPlCNvB4Ruk_oVq0eBjKM")
+       # response = requests.get("https://maps.googleapis.com/maps/api/elevation/json?locations="+str(lat)+"%2C"+str(long)+"&key=AIzaS.......")
+        response = requests.get("https://maps.googleapis.com/maps/api/elevation/json?path="+str(lat0)+"%2C"+str(lon0)+"|"+str(lat1)+"%2C"+str(lon1)+"&samples="+str(Nsteps)+"&key=AIz......")
         if (response.status_code == 200):
             j = response.json()
             return j
