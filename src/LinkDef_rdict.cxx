@@ -35,7 +35,6 @@
 #include "TDataMember.h"
 
 // Header files passed as explicit arguments
-#include "LinkDef.cpp"
 #include "UGburden.h"
 
 // Header files passed via #pragma extra_include
@@ -49,7 +48,6 @@ namespace ROOT {
    static void delete_UGburden(void *p);
    static void deleteArray_UGburden(void *p);
    static void destruct_UGburden(void *p);
-   static void streamer_UGburden(TBuffer &buf, void *obj);
 
    // Function generating the singleton type initializer
    static TGenericClassInfo *GenerateInitInstanceLocal(const ::UGburden*)
@@ -59,14 +57,13 @@ namespace ROOT {
       static ::ROOT::TGenericClassInfo 
          instance("UGburden", ::UGburden::Class_Version(), "UGburden.h", 36,
                   typeid(::UGburden), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &::UGburden::Dictionary, isa_proxy, 16,
+                  &::UGburden::Dictionary, isa_proxy, 4,
                   sizeof(::UGburden) );
       instance.SetNew(&new_UGburden);
       instance.SetNewArray(&newArray_UGburden);
       instance.SetDelete(&delete_UGburden);
       instance.SetDeleteArray(&deleteArray_UGburden);
       instance.SetDestructor(&destruct_UGburden);
-      instance.SetStreamerFunc(&streamer_UGburden);
       return &instance;
    }
    TGenericClassInfo *GenerateInitInstance(const ::UGburden*)
@@ -117,27 +114,10 @@ void UGburden::Streamer(TBuffer &R__b)
 {
    // Stream an object of class UGburden.
 
-   UInt_t R__s, R__c;
    if (R__b.IsReading()) {
-      Version_t R__v = R__b.ReadVersion(&R__s, &R__c); if (R__v) { }
-      TObject::Streamer(R__b);
-      R__b >> refEast;
-      R__b >> refNorth;
-      R__b.StreamObject(&(cloud),typeid(cloud));
-      filename.Streamer(R__b);
-      R__b >> kd_tree;
-      R__b >> n_cols;
-      R__b.CheckByteCount(R__s, R__c, UGburden::IsA());
+      R__b.ReadClassBuffer(UGburden::Class(),this);
    } else {
-      R__c = R__b.WriteVersion(UGburden::IsA(), kTRUE);
-      TObject::Streamer(R__b);
-      R__b << refEast;
-      R__b << refNorth;
-      R__b.StreamObject(&(cloud),typeid(cloud));
-      filename.Streamer(R__b);
-      R__b << kd_tree;
-      R__b << n_cols;
-      R__b.SetByteCount(R__c, kTRUE);
+      R__b.WriteClassBuffer(UGburden::Class(),this);
    }
 }
 
@@ -160,22 +140,17 @@ namespace ROOT {
       typedef ::UGburden current_t;
       (static_cast<current_t*>(p))->~current_t();
    }
-   // Wrapper around a custom streamer member function.
-   static void streamer_UGburden(TBuffer &buf, void *obj) {
-      ((::UGburden*)obj)->::UGburden::Streamer(buf);
-   }
 } // end of namespace ROOT for class ::UGburden
 
 namespace {
   void TriggerDictionaryInitialization_LinkDef_rdict_Impl() {
     static const char* headers[] = {
-"LinkDef.cpp",
 "UGburden.h",
 nullptr
     };
     static const char* includePaths[] = {
 "/home/hagar/Tools/root/install_dir/include/",
-"/home/hagar/Workspace/UGlab/kochav_Hayarden_work/",
+"/home/hagar/Workspace/codes/UGlab/src/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
@@ -192,7 +167,6 @@ class __attribute__((annotate("$clingAutoload$UGburden.h")))  UGburden;
 
 #define _BACKWARD_BACKWARD_WARNING_H
 // Inline headers
-#include "LinkDef.cpp"
 #include "UGburden.h"
 
 #undef  _BACKWARD_BACKWARD_WARNING_H

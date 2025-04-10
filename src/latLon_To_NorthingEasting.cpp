@@ -42,3 +42,19 @@ int latLon_To_NorthingEasting() {
 
     return 0;
 }
+
+
+double  NorthingEastingToangleNorth(double northing, double easting) {
+    // Angle east of north (measured clockwise from north)
+    double angle_from_north_rad = std::atan2(easting, northing);
+    double angle_from_north_deg = angle_from_north_rad * 180.0 / M_PI;
+    return angle_from_north_rad;
+}
+
+double  NorthingEastingToangleEast(double northing, double easting) {
+
+    // Angle north of east (measured counter-clockwise from east)
+    double angle_from_east_rad = std::atan2(northing, easting);
+    double angle_from_east_deg = angle_from_east_rad * 180.0 / M_PI;
+    return angle_from_east_rad;
+}

@@ -66,6 +66,7 @@ private:
     TString filename;
     KDTree* kd_tree = nullptr;  // KDTree as a pointer
     int n_cols;
+    double refLat, refLong;
 
 public:
     UGburden();
@@ -76,6 +77,14 @@ public:
     double get_one(double x_in, double y_in) ;
     double get_one() ;
     void draw_surface();
+
+
+    void setrefLong(double val) {refLong = val;};
+void setrefLat(double val) {refLat = val;};
+double getrefLong() { return refLong;};
+double getrefLat() { return refLat;};
+
+
     TGraph2D* draw_azimuth(TVector3 start_point, double zenith, double azimuth) ;
 
     TVector3 propagateUntilZExceeds(
@@ -88,17 +97,25 @@ public:
         TVector3 start_point,
         double zenith, double azimuth);
 
+
     int getMap();
     void latLonToNorthingEasting(
         double refLat, double refLon, double lat, double lon,
         double& northing, double& easting
     );
+
+
+
     int check_n_columns(); // Add logic for this helper
 
      // Print method
 
     ClassDef(UGburden, 1);                 // ROOT I/O macro
 };
+
+double NorthingEastingToangleNorth(double northing, double easting);
+
+double NorthingEastingToangleEast(double northing, double easting);
 
 
 #endif // UGBURDEN_H

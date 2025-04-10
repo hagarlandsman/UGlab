@@ -47,6 +47,11 @@ UGburden::UGburden()
 
 
 UGburden::UGburden(TString filename_) {
+
+    refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
+    refLong = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
+
+
     kd_tree = nullptr;
     filename = filename_;
     if (getMap() != 1) {
@@ -65,6 +70,9 @@ UGburden::UGburden(TString filename_) {
     kd_tree.buildIndex();
 
     // Optional: Perform operations on cloud here if needed
+
+ printf ("===> Units of coordinates are  {northing , easting } w.r.t refernce  Lat= %f, Long=%f, \n",refLat,refLong);
+
 }
 
 
@@ -75,7 +83,6 @@ UGburden::~UGburden()
         delete kd_tree;  // Clean up the KD-Tree
     }
 }
-
 
 
 
@@ -122,6 +129,7 @@ void UGburden::draw_surface(){
     gr->SetMarkerColor(kRed);
     gr->Draw("surf3");
     canvas->Update();
+    canvas->SaveAs("canvas1.png");
 
 
 }
@@ -165,7 +173,11 @@ double UGburden::get_one(double x_in, double y_in) {
         TVector3 start_point,
         TVector3 direction)
         {
+            printf("Start Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", start_point.X(), start_point.Y(), start_point.Z());
+            printf("direction Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", direction.X(), direction.Y(), direction.Z());
+
             TVector3 final_point = UGburden::propagateUntilZExceeds(start_point, direction);
+            printf("End Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", final_point.X(), final_point.Y(), final_point.Z());
 
             double distance = (start_point-final_point).Mag();
             return distance;
@@ -198,6 +210,7 @@ TVector3 UGburden::propagateUntilZExceeds(
 
     while (true) {
         double query_pt[2] = {current_point.X(), current_point.Y()};
+      //  printf ("x= %f y= %f, angle = %f \n",current_point.X(), current_point.Y(),NorthingEastingToangleNorth(current_point.X(),current_point.Y())* 180.0 / M_PI);
         unsigned int nearest_idx;
         double out_dist_sqr;
         kd_tree->knnSearch(query_pt, 1, &nearest_idx, &out_dist_sqr);
@@ -215,15 +228,13 @@ TVector3 UGburden::propagateUntilZExceeds(
 }
 
 int UGburden::getMap() {
-    double refEast =  0; //249943.68;
-    double refNorth = 0; //722580.77;
 
-    double refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
-    double refLon = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
+
     int n_col = check_n_columns();
 
     TFile* output_file = new TFile("output_tree.root", "RECREATE");
     double northing, easting;
+    double angle_from_north_deg, angle_from_east_deg ;
     float lat2, lon2, elav2, dx, dy, land;
     TTree* T10 = new TTree("T10", "T10");
 
@@ -239,23 +250,29 @@ int UGburden::getMap() {
     T10->SetBranchAddress("lat2", &lat2);
     T10->SetBranchAddress("lon2", &lon2);
     T10->SetBranchAddress("elav2", &elav2);
-    TBranch* branch_easting = T10->Branch("northing", &northing, "northing/D");
-    TBranch* branch_northing = T10->Branch("easting", &easting, "easting/D");
+    TBranch* branch_northing = T10->Branch("northing", &northing, "northing/D");
+    TBranch* branch_easting = T10->Branch("easting", &easting, "easting/D");
+    TBranch* branch_fromnorth = T10->Branch("from_north_deg", &angle_from_north_deg, "from_north_deg/D");
+    TBranch* branch_fromeast = T10->Branch("from_east_deg", &angle_from_east_deg, "from_east_deg/D");
 
     Long64_t nEntries = T10->GetEntries();
     double x_min = 99999, y_min = 99999;
 
     for (Long64_t i = 0; i < nEntries; i++) {
         T10->GetEntry(i);
-        latLonToNorthingEasting(refLat, refLon, lat2, lon2, northing, easting);
+        latLonToNorthingEasting(refLat, refLong, lat2, lon2, northing, easting);
+        double angle_from_north_rad = std::atan2(easting, northing);
+        double angle_from_north_deg = angle_from_north_rad * 180.0 / M_PI;
+        double angle_from_east_rad = std::atan2(northing, easting);
+        double angle_from_east_deg = angle_from_east_rad * 180.0 / M_PI;
+
         branch_easting->Fill();
         branch_northing->Fill();
-        cloud.xy_points.push_back({northing - refNorth, easting - refEast});
+        cloud.xy_points.push_back({northing , easting });
         cloud.z_values.push_back(elav2);
-
-        if (fabs(northing - refNorth) < y_min && fabs(easting - refEast) < x_min) {
-            x_min = easting - refEast;
-            y_min = northing - refNorth;
+        if (fabs(northing ) < y_min && fabs(easting) < x_min) {
+            x_min = easting ;
+            y_min = northing ;
         }
     }
 
@@ -284,6 +301,21 @@ void  UGburden::latLonToNorthingEasting(double refLat, double refLon, double lat
     // Compute northing and easting using a simple equirectangular projection
     northing = dLat * EARTH_RADIUS_METERS;
     easting = dLon * EARTH_RADIUS_METERS * cos(refLatRad);
+}
+
+double  NorthingEastingToangleNorth(double northing, double easting) {
+    // Angle east of north (measured clockwise from north)
+    double angle_from_north_rad = std::atan2(easting, northing);
+    double angle_from_north_deg = angle_from_north_rad * 180.0 / M_PI;
+    return angle_from_north_rad;
+}
+
+double  NorthingEastingToangleEast(double northing, double easting) {
+
+    // Angle north of east (measured counter-clockwise from east)
+    double angle_from_east_rad = std::atan2(northing, easting);
+    double angle_from_east_deg = angle_from_east_rad * 180.0 / M_PI;
+    return angle_from_east_rad;
 }
 int UGburden::check_n_columns(){
     std::ifstream file(filename);
