@@ -48,8 +48,10 @@ UGburden::UGburden()
 
 UGburden::UGburden(TString filename_) {
 
-    refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
-    refLong = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
+   // refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
+    //refLong = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
+    refLong = 35.529270 ;// From nadav
+    refLat =  32.597179 ;// From nadav
 
 
     kd_tree = nullptr;
@@ -66,8 +68,9 @@ UGburden::UGburden(TString filename_) {
         PointCloud,                             // Point cloud data
         2                                       // Dimensionality (x, y)
     > KDTree;
-    KDTree kd_tree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
-    kd_tree.buildIndex();
+  //  KDTree kd_tree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
+  //  kd_tree.buildIndex();
+  buildKDTree();
 
     // Optional: Perform operations on cloud here if needed
 
@@ -91,6 +94,7 @@ void UGburden::buildKDTree() {
     if (kd_tree) {
         delete kd_tree;  // Clean up previous KD-Tree if necessary
     }
+    std::cout << "Loaded " << cloud.xy_points.size() << " points.\n";
 
     kd_tree = new KDTree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
     kd_tree->buildIndex();  // Build the index
@@ -130,6 +134,9 @@ void UGburden::draw_surface(){
     gr->Draw("surf3");
     canvas->Update();
     canvas->SaveAs("canvas1.png");
+    gr->Draw("colz");
+    canvas->Update();
+    canvas->SaveAs("canvas2.png");
 
 
 }
@@ -158,13 +165,35 @@ double UGburden::get_one(double x_in, double y_in) {
 
     double query_pt[2] = {x_in, y_in};
 
+
+
+    /* cout<<" Manual search:\n";
+    double Rmin = 1000;
+    int index = 0;
+    int i=0;
+    for (const auto& pt : cloud.xy_points) {
+     double R = std::abs(pt[0] - x_in)*std::abs(pt[0] - x_in) + std::abs(pt[1] - y_in) * std::abs(pt[1] - y_in) ;
+   //     printf ("x_in=%f,%f,  vs. %f,%f, d=%f \n",x_in,y_in,pt[0],pt[1],R);
+     if (R<Rmin) { Rmin = R;  index = i; }
+        if (std::abs(pt[0] - x_in) < 1e-6 && std::abs(pt[1] - y_in) < 1e-6) {
+            std::cout << "Exact match found in point cloud at: ("
+                      << pt[0] << ", " << pt[1] << ")\n";
+        }
+    i=i+1;
+    }
+    printf("Rmin=%f, i= %d \n",Rmin,i);
+*/
+
     kd_tree->knnSearch(&query_pt[0], num_results, &ret_index, &out_dist_sqr);
 
+
+
+
     // Output nearest point and corresponding z value
-    std::cout << "Nearest point: (" << cloud.xy_points[ret_index][0] << ", "
-              << cloud.xy_points[ret_index][1] << ")\n";
-    std::cout << "Distance squared: " << out_dist_sqr << std::endl;
-    std::cout << "Distance: " << std::sqrt(out_dist_sqr) << std::endl;
+    std::cout << "Nearest point to ("<<x_in<<","<<y_in<<") km  : (" << cloud.xy_points[ret_index][0] << ", "
+              << cloud.xy_points[ret_index][1] << ")\t";
+    std::cout << "Distance squared: " << out_dist_sqr << "\t";
+    std::cout << "Distance: " << std::sqrt(out_dist_sqr) << "\t";
     std::cout << "Corresponding z value: " << cloud.z_values[ret_index] << std::endl;
     return (std::sqrt(out_dist_sqr) );
 }
@@ -173,12 +202,12 @@ double UGburden::get_one(double x_in, double y_in) {
         TVector3 start_point,
         TVector3 direction)
         {
-            printf("Start Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", start_point.X(), start_point.Y(), start_point.Z());
-            printf("direction Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", direction.X(), direction.Y(), direction.Z());
+         //   printf("Start Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", start_point.X(), start_point.Y(), start_point.Z());
+          //  printf("direction Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", direction.X(), direction.Y(), direction.Z());
 
             TVector3 final_point = UGburden::propagateUntilZExceeds(start_point, direction);
-            printf("End Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", final_point.X(), final_point.Y(), final_point.Z());
-
+            //printf("End Vector components: X = %.2f, Y = %.2f, Z = %.2f\n", final_point.X(), final_point.Y(), final_point.Z());
+       //     printf("(x,y,z)=(%f, %f, %f) \n",final_point.X(),final_point.Y(),final_point.Z());
             double distance = (start_point-final_point).Mag();
             return distance;
 
@@ -204,6 +233,8 @@ double UGburden::get_one(double x_in, double y_in) {
 TVector3 UGburden::propagateUntilZExceeds(
     TVector3 start_point, TVector3 direction
 ) {
+
+    direction = direction.Unit();
     double u = 0.0;
     TVector3 current_point = start_point;
     double step_size = 0.1;
@@ -214,7 +245,14 @@ TVector3 UGburden::propagateUntilZExceeds(
         unsigned int nearest_idx;
         double out_dist_sqr;
         kd_tree->knnSearch(query_pt, 1, &nearest_idx, &out_dist_sqr);
+        //kd_tree->knnSearch(&query_pt[0], num_results, &ret_index, &out_dist_sqr);
 
+   /*     std::cout << "Nearest point to ("<<query_pt[0]<<","<<query_pt[1]<<" z="<<current_point.Z()<<")  : (" << cloud.xy_points[nearest_idx][0] << ", "
+        << cloud.xy_points[nearest_idx][1] << ")\t";
+std::cout << "Distance squared: " << out_dist_sqr << "\t";
+std::cout << "Distance: " << std::sqrt(out_dist_sqr) << "\t";
+std::cout << "Corresponding z value: " << cloud.z_values[nearest_idx] << std::endl;
+*/
         const double nearest_z = cloud.z_values[nearest_idx];
 
         if (current_point.Z() > nearest_z) break;
@@ -269,6 +307,7 @@ int UGburden::getMap() {
         branch_easting->Fill();
         branch_northing->Fill();
         cloud.xy_points.push_back({northing , easting });
+        //cout<<"northing = "<<northing<<" easting="<<easting<<"  elav="<<elav2<<endl;
         cloud.z_values.push_back(elav2);
         if (fabs(northing ) < y_min && fabs(easting) < x_min) {
             x_min = easting ;

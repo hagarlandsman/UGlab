@@ -7,7 +7,17 @@ const double DEG_TO_RAD = M_PI / 180.0;
 
 // Converts latitude and longitude (in degrees) to northing and easting
 
+std::cout<<" Obsolete, use ITM_coordiante.cpp, and example_ITM_coordinate.cpp \n"
+void ITMTolatLon(double northing, double easting);
 
+void ITMTolatLon(double northing, double easting){
+    double ITM_Lat_Origin = 31.73436; // 31° 44' 03.8170" N;
+    double ITM_Long_Origin = 35.20452; //35° 12' 16.2610" E
+
+
+
+
+}
 void  latLonToNorthingEasting(double refLat, double refLon, double lat, double lon, double &northing, double &easting) {
     // Convert degrees to radians
     double refLatRad = refLat * DEG_TO_RAD;

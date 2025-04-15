@@ -43,6 +43,10 @@ LinkDef_rdict.cxx: UGburden.h LinkDef.h
 	rootcling -f $@ -c UGburden.h LinkDef.h
 
 
+
+geo_converter:example_ITM_coordinate.cpp ITM_coordinate.cpp
+	$(CXX) -o $@ $^   -I. -lproj -Wall -std=c++11
+
 clean:
 
 	rm -f $(TARGET) $(UGTEST_TARGET)
