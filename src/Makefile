@@ -47,6 +47,9 @@ LinkDef_rdict.cxx: UGburden.h LinkDef.h
 geo_converter:example_ITM_coordinate.cpp ITM_coordinate.cpp
 	$(CXX) -o $@ $^   -I. -lproj -Wall -std=c++11
 
+muon_rate: muon_rate.cpp LinkDef_rdict.cxx UGburden.cpp LinkDef_rdict.cxx
+	$(CXX) -o $@ $^ -std=c++17 -O2 -lm -pthread `root-config --cflags --libs`
+
 clean:
 
 	rm -f $(TARGET) $(UGTEST_TARGET)
