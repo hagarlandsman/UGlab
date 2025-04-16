@@ -46,7 +46,7 @@ int get_flux(){
         TGraph *g1=new TGraph();
         TGraph *g1i=new TGraph();
 
-        for (float x=40;x<1000; x=x+10){
+        for (float x=40;x<2000; x=x+20){
         double r= get_flux_ug(x);
             g1->SetPoint(g1->GetN(),depth_to_mwe_rock(x),r);
             g1i->SetPoint(g1i->GetN(),r,depth_to_mwe_rock(x));
