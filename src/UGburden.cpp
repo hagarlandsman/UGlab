@@ -50,35 +50,41 @@ UGburden::UGburden(TString filename_) {
 
    // refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
     //refLong = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
-    refLong = 35.529270 ;// From nadav
-    refLat =  32.597179 ;// From nadav
-
-
-    kd_tree = nullptr;
-    filename = filename_;
-    if (getMap() != 1) {
-        std::cerr << "Error loading map from file: " << filename << std::endl;
-    } else {
-        std::cout << "Successfully loaded map from file: " << filename << std::endl;
-    }
-    buildKDTree();
-
-    typedef KDTreeSingleIndexAdaptor<
-        L2_Simple_Adaptor<double, PointCloud>,  // Distance metric
-        PointCloud,                             // Point cloud data
-        2                                       // Dimensionality (x, y)
-    > KDTree;
-  //  KDTree kd_tree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
-  //  kd_tree.buildIndex();
-  buildKDTree();
-
-    // Optional: Perform operations on cloud here if needed
-
- printf ("===> Units of coordinates are  {northing , easting } w.r.t refernce  Lat= %f, Long=%f, \n",refLat,refLong);
+    load(filename_) ;
 
 }
 
 
+int UGburden::load(TString filename_) {
+     // refLat = 32.597179;  // kochav - based on east/north 249943.68; 722580.77;
+     //refLong = 35.529270;   // kochav  -   based on east/north 249943.68; 722580.77;
+     refLong = 35.529270 ;// From nadav
+     refLat =  32.597179 ;// From nadav
+
+
+     kd_tree = nullptr;
+     filename = filename_;
+     if (getMap() != 1) {
+         std::cerr << "Error loading map from file: " << filename << std::endl;
+     } else {
+         std::cout << "Successfully loaded map from file: " << filename << std::endl;
+     }
+     buildKDTree();
+
+     typedef KDTreeSingleIndexAdaptor<
+         L2_Simple_Adaptor<double, PointCloud>,  // Distance metric
+         PointCloud,                             // Point cloud data
+         2                                       // Dimensionality (x, y)
+     > KDTree;
+   //  KDTree kd_tree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
+   //  kd_tree.buildIndex();
+   buildKDTree();
+
+     // Optional: Perform operations on cloud here if needed
+
+  printf ("===> Units of coordinates are  {northing , easting } w.r.t refernce  Lat= %f, Long=%f, \n",refLat,refLong);
+  return (cloud.xy_points.size());
+ }
 
 UGburden::~UGburden()
 {
@@ -133,10 +139,13 @@ void UGburden::draw_surface(){
     gr->SetMarkerColor(kRed);
     gr->Draw("surf3");
     canvas->Update();
-    canvas->SaveAs("canvas1.png");
+    canvas->SaveAs("map_surface1.png");
+    canvas->SaveAs("map_surface1.pdf");
+
     gr->Draw("colz");
     canvas->Update();
-    canvas->SaveAs("canvas2.png");
+    canvas->SaveAs("map_surface2.png");
+    canvas->SaveAs("map_surface2.pdf");
 
 
 }
@@ -241,10 +250,12 @@ TVector3 UGburden::propagateUntilZExceeds(
 
     while (true) {
         double query_pt[2] = {current_point.X(), current_point.Y()};
+    //    printf ("looking for %f %f \n",current_point.X(),current_point.Y());
       //  printf ("x= %f y= %f, angle = %f \n",current_point.X(), current_point.Y(),NorthingEastingToangleNorth(current_point.X(),current_point.Y())* 180.0 / M_PI);
         unsigned int nearest_idx;
         double out_dist_sqr;
         kd_tree->knnSearch(query_pt, 1, &nearest_idx, &out_dist_sqr);
+       // printf ("Found %d\n",nearest_idx);
         //kd_tree->knnSearch(&query_pt[0], num_results, &ret_index, &out_dist_sqr);
 
    /*     std::cout << "Nearest point to ("<<query_pt[0]<<","<<query_pt[1]<<" z="<<current_point.Z()<<")  : (" << cloud.xy_points[nearest_idx][0] << ", "

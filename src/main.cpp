@@ -2,31 +2,96 @@
 #include "TVector3.h"
 #include "TH2F.h"
 #include "TStyle.h"
-void make_1d_slunt_plot(UGburden burden) ;
-void make_2d_slunt_plot(UGburden burden) ;
+#include "muon_rate.h"
 
+// Plots for the 04/2025 cosmic rays paper
+void make_1d_slunt_plot(UGburden *burden) ;
+void make_2d_slunt_plot(UGburden *burden) ;
+int get_flux();
 int main() {
    // TString map_file = "../../../works/UGlab/kochav_Hayarden/sim/R60km_0.1.csv";
     //TString map_file = "../../../works/UGlab/kochav_Hayarden/sim/R10km_0.005.csv";
-    TString map_file = "../mytools/scan_10km_step10m.csv";
 
-    UGburden burden(map_file);
-    burden.draw_surface();
+
+
+    printf ("\n\n=====> \t\t Loading map \n\n");
+   // TString map_file = "../mytools/scan_10km_step10m.csv";
+
+    TString map_file = "../mytools/scan_10km_step10m.csv";
+//    UGburden burden(map_file);
+    UGburden *burden=new UGburden(map_file);
+
+    burden->draw_surface();
 
     //some_examples(burden);
-
-    //make_1d_slunt_plot(burden);
-
+    printf ("\n\n=====> \t\t 1D slunt plot\n\n");
+    make_1d_slunt_plot(burden);
+    printf ("\n\n=====> \t\t 2D slunt plot\n\n");
     make_2d_slunt_plot(burden);
 
+    printf ("\n\n=====> \t\t flux plot\n\n");
+    get_flux();
     return (0);
 }
 
-void some_examples(UGburden burden) {
-    burden.get_one(-929.994,939.698);//10.2376, 5.02477);
-    burden.get_one(500,500);  // The units are : northing - refNorth, easting - refEast in m
-    burden.get_one(1,1);  // The units are : northing - refNorth, easting - refEast
-    burden.get_one(0,0);  // The units are : northing - refNorth, easting - refEast
+
+int get_flux(){
+
+        TVector3 start_point(0, 0, -274.505);
+        TString map_file = "../mytools/scan_10km_step10m.csv";
+
+        double h = get_flux_ug(-4,map_file,start_point);  // Some negative value as depth, so the function will use the 3d surface map for ray tracing.
+        printf ("Kochav = %f\n",h);
+
+        TGraph *g1=new TGraph();
+        TGraph *g1i=new TGraph();
+
+        for (float x=40;x<1000; x=x+10){
+        double r= get_flux_ug(x);
+            g1->SetPoint(g1->GetN(),depth_to_mwe_rock(x),r);
+            g1i->SetPoint(g1i->GetN(),r,depth_to_mwe_rock(x));
+
+            printf ("x= %f m \t xmwe= %f m\t  f=%e \n",x,depth_to_mwe_rock(x),r);
+        }
+        printf ("Kochav depth like %f \n",g1i->Eval(h));
+        TGraph *g2 = new TGraph();
+        g2->SetPoint(0,g1i->Eval(h),h);
+        g2->SetMarkerColor(2);
+        g2->SetMarkerStyle(20);
+        g2->SetMarkerSize(3);
+
+        TCanvas *c1=new TCanvas("c1","c1",800,800);
+       // 7.640681e-08
+        g1->SetTitle("Flat depth; Depth [m.w.e]; m^{-2}s^{-1}");
+        g2->SetTitle("Kochav; Depth [m.w.e]; m^{-2}s^{-1}");
+        g1->Draw("A*l");
+        g2->Draw("*");
+        gPad->SetLogy();
+        gPad->SetLogx();
+        gPad->SetGrid();
+        c1->SaveAs("get_flux.png");
+        TFile* fout = new TFile("get_flux.root", "RECREATE");
+        g1->Write();
+        g2->Write();
+        fout->Close();
+
+    //double kk = get_flux_kochav();
+      //  printf ("kk= %e \n",kk);
+        return -1;
+        // depth in mwe
+
+
+
+
+
+
+}
+
+void some_examples(UGburden *burden) {
+    burden->get_one(-929.994,939.698);//10.2376, 5.02477);
+    burden->get_one(500,500);  // The units are : northing - refNorth, easting - refEast in m
+    burden->get_one(1,1);  // The units are : northing - refNorth, easting - refEast
+    burden->get_one(0,0);  // The units are : northing - refNorth, easting - refEast
     TVector3 start_point(0, 0, -274.505);  // Starting at (1.0, 1.0, 0.5)
 
 
@@ -36,22 +101,22 @@ void some_examples(UGburden burden) {
     printf ("side: theta=%f, phi=%f \n", side.Theta()* 180.0 / M_PI,side.Phi() *180.0/ M_PI);
 
     TVector3 vertical(0,0,10); //
-    double b_vertical = burden.getRburden(start_point, vertical);
+    double b_vertical = burden->getRburden(start_point, vertical);
     printf ( " Vertical up: burden=%f ,  Angle north = %f , zenith = %f  \n",b_vertical,vertical.Theta()* 180.0 / M_PI,vertical.Phi() *180.0/ M_PI);
 
     TVector3 north(1, 0, 1);    // Propagate along z-axis (z direction)
     north.SetMagThetaPhi(1.0, 10/180.*M_PI, 0.0);
-    double b_north = burden.getRburden(start_point, north);
+    double b_north = burden->getRburden(start_point, north);
     printf ( " north: burden=%f ,  Angle north = %f , zenith = %f  \n",b_vertical,vertical.Theta()* 180.0 / M_PI,vertical.Phi() *180.0/ M_PI);
 
     TVector3 east(0, 1, 1);    // Propagate along z-axis (z direction)
     east.SetMagThetaPhi(1.0, 10/180.*M_PI,  0.5 * M_PI);
-    double b_east = burden.getRburden(start_point, east);
+    double b_east = burden->getRburden(start_point, east);
     printf ( " east: burden=%f ,  Angle north = %f , zenith = %f  \n",b_east,east.Theta()* 180.0 / M_PI,east.Phi() *180.0/ M_PI);
 
 
 }
-void make_1d_slunt_plot(UGburden burden) {
+void make_1d_slunt_plot(UGburden *burden) {
     TVector3 start_point(0, 0, -274.505);  // Starting at (1.0, 1.0, 0.5)
 
     TVector3 east(0,1,20);
@@ -62,7 +127,7 @@ void make_1d_slunt_plot(UGburden burden) {
 
         north.SetMagThetaPhi(1.0, theta*M_PI/180., 0.0);  // φ = 0 = North direction in XZ plane
 
-        double a0 = burden.getRburden(start_point, north);
+        double a0 = burden->getRburden(start_point, north);
         if (theta==30 || theta==-30)  printf (" %f north (%f,%f,%f), theta= %f, phi=%f \n",a0,north.X(),north.Y(),north.Z(),north.Theta(),north.Phi());
 
         g1->SetPoint(g1->GetN(),theta,a0);
@@ -77,7 +142,7 @@ void make_1d_slunt_plot(UGburden burden) {
 
 
 
-        double a0 = burden.getRburden(start_point, east);
+        double a0 = burden->getRburden(start_point, east);
         if (theta==30 || theta==-30) printf ("%f east (%f,%f,%f), theta= %f, phi=%f \n",a0,east.X(),east.Y(),east.Z(),east.Theta(),east.Phi());
         g2->SetPoint(g2->GetN(),theta,a0);
 
@@ -94,7 +159,7 @@ void make_1d_slunt_plot(UGburden burden) {
 
 
 }
-void make_2d_slunt_plot(UGburden burden) {
+void make_2d_slunt_plot(UGburden *burden) {
     TVector3 start_point(0, 0, -274.505);  // Starting at (1.0, 1.0, 0.5)
 
     const int NcosTheta = 100;  // bins in cos(θ), from 0 to 1
@@ -121,7 +186,7 @@ void make_2d_slunt_plot(UGburden burden) {
 
             TVector3 dir;
             dir.SetMagThetaPhi(1.0, theta_rad, phi_rad);
-            double a1 = burden.getRburden(start_point, dir);
+            double a1 = burden->getRburden(start_point, dir);
            // printf(" %f, %f %f\n",phi_deg,theta_deg,a1);
             h->Fill(phi_deg, cos_theta,a1);  // y-axis is cos(zenith)
             }
@@ -136,8 +201,9 @@ void make_2d_slunt_plot(UGburden burden) {
     gStyle->SetNumberContours(100);  // smooth gradient
 
     h->Draw("colz");
-    c1->SaveAs("d2.png");
-    TFile* fout = new TFile("coszenith_phi_hist.root", "RECREATE");
+    c1->SaveAs("slunt_2d.png");
+    c1->SaveAs("slunt_2d.pdf");
+    TFile* fout = new TFile("slunt_2d.root", "RECREATE");
     h->Write();
     fout->Close();
 

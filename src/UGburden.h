@@ -70,9 +70,12 @@ private:
 
 public:
     UGburden();
-    UGburden(TString filename) ;                           // Default constructor
+    UGburden(TString filename) ;
+                             // Default constructor
            // Constructor with parameters
     virtual ~UGburden();                   // Destructor
+    int load(TString filename_) ;
+
     void buildKDTree();  // Method to build KD-Tree
     double get_one(double x_in, double y_in) ;
     double get_one() ;

@@ -28,7 +28,7 @@ UGburden: main.cpp LinkDef_rdict.cxx UGburden.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
 
 
-main: main.cpp LinkDef_rdict.cxx UGburden.cpp LinkDef_rdict.cxx
+main: main.cpp LinkDef_rdict.cxx UGburden.cpp LinkDef_rdict.cxx muon_rate.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
 
 knn_search: read_geometry.c
